@@ -1,0 +1,40 @@
+"""utils to help make generic connections for databases
+"""
+
+from os import getenv
+from dotenv import load_dotenv
+from psycopg2 import sql
+
+import psycopg2
+
+ENV_PATH = ".env"
+
+
+def connection_start():
+    load_dotenv(ENV_PATH)
+    # connection parameters
+    db_params = {
+        "dbname": getenv("dbname"),
+        "user": getenv("db_user"),
+        "password": getenv("db_password"),
+        "host": getenv("db_host"),
+        "port": getenv("db_port"),
+    }
+    # start connection
+    try:
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+        print("Database connection established")
+        return conn, cur
+    except Exception as e:
+        print(f"Connection Failed. {e}")
+        return 0, 0
+
+
+def connection_end(cur, conn):
+    cur.close()
+    conn.close()
+    return print("Database connection closed")
+
+conn, cur = connection_start()
+connection_end(cur, conn)
