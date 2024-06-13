@@ -1,0 +1,7 @@
+.venv
+**/__inti__.py
+**/__pycache__
+data_tables/
+llm_models/
+**/.ipynb_checkpoints
+.vscode
