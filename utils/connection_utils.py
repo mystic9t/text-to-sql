@@ -3,7 +3,6 @@
 
 from os import getenv
 from dotenv import load_dotenv
-from psycopg2 import sql
 
 import psycopg2
 
@@ -35,6 +34,3 @@ def connection_end(cur, conn):
     cur.close()
     conn.close()
     return print("Database connection closed")
-
-conn, cur = connection_start()
-connection_end(cur, conn)
