@@ -10,6 +10,11 @@ ENV_PATH = ".env"
 
 
 def connection_start():
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
     load_dotenv(ENV_PATH)
     # connection parameters
     db_params = {
@@ -31,6 +36,15 @@ def connection_start():
 
 
 def connection_end(cur, conn):
+    """_summary_
+
+    Args:
+        cur (_type_): _description_
+        conn (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     cur.close()
     conn.close()
     return print("Database connection closed")

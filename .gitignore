@@ -6,3 +6,4 @@ data_tables/
 llm_models/
 **/.ipynb_checkpoints
 .vscode
+.pytest_cache
