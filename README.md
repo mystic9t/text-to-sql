@@ -1,5 +1,8 @@
 # Talk to your Data System
 ## Getting Started
+### Breakdown
+All SQL queries are to be placed in ***constants/sql_query.py***
+Update configuration (***config\config.json***) to ensure data is loaded and extarcted meaningfully
 ### Setup Environment
 ```
 pip install -r requirements.txt
