@@ -1,3 +1,26 @@
 {
-    "date_time_list": ["date", "time"]
+    "dtype_list": {
+        "date_time_list": [
+            "date",
+            "time"
+        ],
+        "key_list": [
+            "_ID",
+            "_id"
+        ],
+        "skip_list": [
+            "date",
+            "time",
+            "_ID",
+            "_id",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "street"
+        ]
+    },
+    "driver_name": "postgresql+psycopg2",
+    "schema_name": "motor_store",
+    "tables": []
 }

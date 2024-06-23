@@ -1,8 +1,11 @@
-"""utils to help make generic connections for databases
+"""
+utils to help make generic connections for databases
 """
 
 from os import getenv
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.engine import URL
 
 import psycopg2
 
@@ -18,7 +21,7 @@ def connection_start():
     load_dotenv(ENV_PATH)
     # connection parameters
     db_params = {
-        "dbname": getenv("dbname"),
+        "dbname": getenv("db_name"),
         "user": getenv("db_user"),
         "password": getenv("db_password"),
         "host": getenv("db_host"),
@@ -48,3 +51,29 @@ def connection_end(cur, conn):
     cur.close()
     conn.close()
     return print("Database connection closed")
+
+
+def sql_engine(drivername, schema_name):
+    """_summary_
+
+    Args:
+        drivername (_type_): _description_
+        schema_name (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    # connection URL
+    db_url = URL.create(
+        drivername=drivername,
+        username=getenv("db_user"),
+        password=getenv("db_password"),
+        host=getenv("db_host"),
+        port=getenv("db_port"),
+        database=getenv("db_name"),
+    )
+    # Creating engine and MetaData with schema
+    engine = create_engine(db_url)
+    metadata_obj = MetaData(schema=schema_name)
+    print("SQL Alchemy engine created")
+    return engine, metadata_obj
