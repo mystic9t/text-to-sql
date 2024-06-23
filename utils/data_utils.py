@@ -4,7 +4,7 @@ contains utility functions realted to data loading and clean up
 
 import json
 import re
-from sqlalchemy import Column, String, Integer, DateTime, Float
+from sqlalchemy import Column, String, Integer, DateTime, Float, Table
 import pandas as pd
 
 CONFIG_PATH = "config/config.json"
@@ -55,7 +55,8 @@ def convert_columns_to_datetime(df):
 def create_table_from_dataframe(
     df: pd.DataFrame, table_name: str, engine, metadata_obj
 ):
-    """creates a Table from df using SQLAlchemy and basic cursor connection
+    """
+    creates a Table from df using SQLAlchemy and basic cursor connection
 
     Args:
         df (pd.DataFrame): _description_
