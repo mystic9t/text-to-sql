@@ -31,7 +31,6 @@ def connection_start():
     try:
         conn = psycopg2.connect(**db_params)
         cur = conn.cursor()
-        print("Database connection established")
         return conn, cur
     except Exception as e:
         print(f"Connection Failed. {e}")
@@ -44,13 +43,9 @@ def connection_end(cur, conn):
     Args:
         cur (_type_): _description_
         conn (_type_): _description_
-
-    Returns:
-        _type_: _description_
     """
     cur.close()
     conn.close()
-    return print("Database connection closed")
 
 
 def sql_engine(drivername, schema_name):
@@ -75,5 +70,4 @@ def sql_engine(drivername, schema_name):
     # Creating engine and MetaData with schema
     engine = create_engine(db_url)
     metadata_obj = MetaData(schema=schema_name)
-    print("SQL Alchemy engine created")
     return engine, metadata_obj

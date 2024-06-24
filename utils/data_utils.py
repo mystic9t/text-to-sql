@@ -8,6 +8,7 @@ import os
 from sqlalchemy import Column, String, Integer, DateTime, Float, Table, inspect
 from sqlalchemy.sql import text
 import pandas as pd
+import numpy as np
 
 from constants.sql_query import GET_CARDINALS
 
@@ -81,6 +82,8 @@ def convert_columns(df):
         # Check if any of the words in key_list are in the column name
         if any(word in column for word in key_list):
             df[column] = df[column].astype(str)
+    # Replace NaN and NaT with None
+    df = df.replace({np.NaN: None})
 
     return df
 
@@ -103,6 +106,7 @@ def create_table_from_dataframe(
 
     # Check for date/time and ID/keys columns
     df = convert_columns(df)
+
     # Dynamically create columns based on DataFrame columns and data types
     columns = [
         Column(
@@ -149,9 +153,9 @@ def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
     """
     # Getting keywords for IDs/Keys
     with open(CONFIG_PATH, "r", encoding="utf-8") as file:
-            config = json.load(file)
-            dtype_list = config.get("dtype_list", {})
-            skip_list = dtype_list.get("skip_list", [])
+        config = json.load(file)
+        dtype_list = config.get("dtype_list", {})
+        skip_list = dtype_list.get("skip_list", [])
 
     # Get Metadata
     metadata_obj.reflect(bind=engine)
@@ -171,15 +175,15 @@ def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
             column_type = column["type"]
             # Skip column if it contains any of the skip_column_keywords
             if any(keyword in column_name for keyword in skip_list):
-                column_info[column_name] = "Non-Categorical"            
+                column_info[column_name] = "Non-Categorical"
             # Check if the column is a string type
-            elif "CHAR" in str(column_type).upper() or "TEXT" in str(column_type).upper():
+            elif (
+                "CHAR" in str(column_type).upper() or "TEXT" in str(column_type).upper()
+            ):
                 # Query to get distinct values
                 with engine.connect() as connection:
                     result = connection.execute(
-                        text(
-                            GET_CARDINALS.format(column_name, schema_name, table_name)
-                        )
+                        text(GET_CARDINALS.format(column_name, schema_name, table_name))
                     ).mappings()  # Fetch results as a list of dictionaries
                     distinct_values = [row[column_name] for row in result]
                 column_info[column_name] = distinct_values

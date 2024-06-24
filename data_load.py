@@ -12,9 +12,10 @@ from utils.connection_utils import sql_engine, connection_start, connection_end
 from constants.sql_query import CREATE_SCHEMA
 
 CONFIG_PATH = "config/config.json"
-LOAD_TABLES = False
+LOAD_TABLES = True
 EXTRACT_DATA = True
 DATA_EXTRACT = "data_tables/data_extract.json"
+SILO_DATA = "data_tables/silo"
 
 
 def main():

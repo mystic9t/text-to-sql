@@ -1,3 +1,6 @@
+"""
+contains SQL queries to be utilized
+"""
 CREATE_SCHEMA ="""
 CREATE SCHEMA IF NOT EXISTS {}
 """
