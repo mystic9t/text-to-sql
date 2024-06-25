@@ -19,8 +19,11 @@ AND table_name = {}
 """
 
 GET_CARDINALS = """
-SELECT DISTINCT {}
-FROM {}.{}
-ORDER BY 1
-LIMIT 20
+with cte as (
+    SELECT count(DISTINCT {column_name}) AS Cardinality
+    FROM {schema_name}.{table_name}
+)
+SELECT DISTINCT {column_name}
+FROM {schema_name}.{table_name}
+WHERE (SELECT Cardinality FROM cte) <= 20
 """

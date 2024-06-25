@@ -1,6 +1,7 @@
 """
 loads data from csv to SQL database and extracts table and column information into a json
 """
+
 import json
 from utils.data_utils import (
     load_csv_to_df,
@@ -12,7 +13,7 @@ from utils.connection_utils import sql_engine, connection_start, connection_end
 from constants.sql_query import CREATE_SCHEMA
 
 CONFIG_PATH = "config/config.json"
-LOAD_TABLES = True
+LOAD_TABLES = False
 EXTRACT_DATA = True
 DATA_EXTRACT = "data_tables/data_extract.json"
 SILO_DATA = "data_tables/silo"
@@ -51,9 +52,7 @@ def main():
                 print(f"unable to load {name}, error: {e}\n Skipping...")
     if EXTRACT_DATA:
         # Extracting Data from SQL Database
-        ## Creating SQLAlchemy engine to load tables in Database
-        engine, metadata_obj = sql_engine(driver_name, schema_name)
-        extract_cardinals(engine, metadata_obj, schema_name, DATA_EXTRACT)
+        extract_cardinals(DATA_EXTRACT)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from sqlalchemy.sql import text
 import pandas as pd
 import numpy as np
 
+from utils.connection_utils import sql_engine
 from constants.sql_query import GET_CARDINALS
 
 CONFIG_PATH = "config/config.json"
@@ -142,7 +143,7 @@ def create_table_from_dataframe(
         conn.commit()
 
 
-def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
+def extract_cardinals(data_extact):
     """Extract distinct values of string columns from tables in the given schema.
 
     Args:
@@ -156,7 +157,11 @@ def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
         config = json.load(file)
         dtype_list = config.get("dtype_list", {})
         skip_list = dtype_list.get("skip_list", [])
+        driver_name = config.get("driver_name", "")
+        schema_name = config.get("schema_name", "")
 
+    ## Creating SQLAlchemy engine to load tables in Database
+    engine, metadata_obj = sql_engine(driver_name, schema_name)
     # Get Metadata
     metadata_obj.reflect(bind=engine)
     # Initialize an inspector
@@ -183,7 +188,13 @@ def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
                 # Query to get distinct values
                 with engine.connect() as connection:
                     result = connection.execute(
-                        text(GET_CARDINALS.format(column_name, schema_name, table_name))
+                        text(
+                            GET_CARDINALS.format(
+                                column_name=column_name,
+                                schema_name=schema_name,
+                                table_name=table_name,
+                            )
+                        )
                     ).mappings()  # Fetch results as a list of dictionaries
                     distinct_values = [row[column_name] for row in result]
                 column_info[column_name] = distinct_values
@@ -195,4 +206,5 @@ def extract_cardinals(engine, metadata_obj, schema_name, data_extact):
     output_file = data_extact
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(tables_columns_dict, f, indent=4)
+
     return print(f"Data extracted into {output_file}")
