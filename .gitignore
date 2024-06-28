@@ -1,9 +1,11 @@
-.venv
-.env
+**/.csv
+**/.ipynb_checkpoints
 **/__inti__.py
 **/__pycache__
+.env
+.pytest_cache
+.venv
+.vscode
 data_tables/
 llm_models/
-**/.ipynb_checkpoints
-.vscode
-.pytest_cache
+vectorstore/
