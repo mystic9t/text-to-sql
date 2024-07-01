@@ -57,7 +57,7 @@ def question_refactor(input_text):
         temperature=0.1,
     )
 
-    #     Generated prediction: {
+    #   Sample of values in completion: {
     #   "id": "chatcmpl-f1n6lygvwxsx3ck418fym",
     #   "object": "chat.completion",
     #   "created": 1719838117,
