@@ -5,8 +5,10 @@ import json
 from dotenv import load_dotenv
 import gradio as gr
 from openai import OpenAI
+import psycopg2
 
 DATA_PATH = "data_tables/data_extract.json"
+CONFIG_PATH = "config/config.json"
 ENV_PATH = ".env"
 
 
@@ -58,7 +60,7 @@ def question_refactor(input_text):
     return completion.choices[0].message.content
 
 
-def generatesql(refactored):
+def generate_sql(refactored):
     json_data = load_json_data(DATA_PATH)
     table_info = json_to_text(json_data)
     # function that takes in a question and asks an LLM to create a corresponding query
@@ -96,13 +98,40 @@ def generatesql(refactored):
     return completion.choices[0].message.content
 
 
+def execute_sql(query):
+    load_dotenv(ENV_PATH)
+    # connection parameters
+    db_params = {
+        "dbname": getenv("db_name"),
+        "user": getenv("db_user"),
+        "password": getenv("db_password"),
+        "host": getenv("db_host"),
+        "port": getenv("db_port"),
+    }
+    conn = psycopg2.connect(**db_params)
+    cur = conn.cursor()
+    cur.execute(query)
+    conn.commit()
+    rows = cur.fetchall()
+    column_names = [description[0] for description in cur.description]
+    # Convert rows to a list of dictionaries
+    result = []
+    for row in rows:
+        row_dict = dict(zip(column_names, row))
+        result.append(row_dict)
+    cur.close()
+    conn.close()
+    return result
+
 # Define a function that uses Gradio's input and output widgets
 def process_input(input_text):
     # Reframe the user's input using your `reframe_question` function
     refactored = question_refactor(input_text)
     print(f"Question refactored: {refactored}")
-    query = generatesql(refactored)
-    print("Query generated")
+    query = generate_sql(refactored)
+    print(f"Query generated: {query}")
+    result = execute_sql(query)
+    print(f"Fetched results: {result}")
     # Return the result as a string for display in Gradio interface
     return query
 
