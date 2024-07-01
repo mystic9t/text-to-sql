@@ -49,13 +49,35 @@ def question_refactor(input_text):
                         Make the input more verbose.
                         Do not add anything out of context.
                         Do not ask for clarifications.
-                        Whenever not specified constrain to question to current year.
+                        Whenever not specified constrain the question to current year.
                         Do not include any of this in the output""",
             },
             {"role": "user", "content": f"{input_text}"},
         ],
         temperature=0.1,
     )
+
+    #     Generated prediction: {
+    #   "id": "chatcmpl-f1n6lygvwxsx3ck418fym",
+    #   "object": "chat.completion",
+    #   "created": 1719838117,
+    #   "model": "Qwen/Qwen2-7B-Instruct-GGUF/qwen2-7b-instruct-q5_k_m.gguf",
+    #   "choices": [
+    #     {
+    #       "index": 0,
+    #       "message": {
+    #         "role": "assistant",
+    #         "content": ""
+    #       },
+    #       "finish_reason": "stop"
+    #     }
+    #   ],
+    #   "usage": {
+    #     "prompt_tokens": 865,
+    #     "completion_tokens": 213,
+    #     "total_tokens": 1078
+    #   }
+    # }
 
     return completion.choices[0].message.content
 
