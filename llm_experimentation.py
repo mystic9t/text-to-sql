@@ -8,6 +8,7 @@ from openai import OpenAI
 import psycopg2
 
 DATA_PATH = "data_tables/data_extract.json"
+DATA_TEXT_PATH = "data_tables/data_extract_text"
 CONFIG_PATH = "config/config.json"
 ENV_PATH = ".env"
 
@@ -25,25 +26,32 @@ def json_to_text(data, level=0):
         for key, value in data.items():
             text += f"{indent}{key}: "
             if isinstance(value, dict) or isinstance(value, list):
-                text += "\n" + json_to_text(value, level + 1)
+                if isinstance(value, list) and value:  # Ensure the list is not empty
+                    text += f"{value[0]}\n"  # First element of the list in front of the column name
+                    if len(value) > 1:
+                        text += json_to_text(
+                            value[1:], level + 1
+                        )  # Process the rest of the list
+                else:
+                    text += "\n" + json_to_text(value, level + 1)
             else:
                 text += f"{value}\n"
     elif isinstance(data, list):
-        list_items = ", ".join(map(str, data))
-        text += f"{indent}{list_items}\n"
+        for item in data:
+            text += f"{indent}- {item}\n"
     return text
 
 
 def question_refactor(input_text):
     load_dotenv(ENV_PATH)
-    client = OpenAI(base_url=getenv("OPENAI_BASE"), api_key=getenv("OPENAI_API_KEY"))
+    client = OpenAI(base_url=getenv("LLM_API_BASE"), api_key=getenv("LLM_API_KEY"))
     completion = client.chat.completions.create(
         model=getenv("LLM_MODEL2"),
         messages=[
             {
                 "role": "system",
                 "content": """
-                        You are an expert business analyst, working with the CEO of Rand chain of motor stores. 
+                        You are an expert business analyst, working with the CEO of Rand Global. 
                         You take in any question and make it more understandable.
                         Reframe the user input by correcting any possible spelling and grammer issues.
                         Make the input more verbose.
@@ -85,9 +93,14 @@ def question_refactor(input_text):
 def generate_sql(refactored):
     json_data = load_json_data(DATA_PATH)
     table_info = json_to_text(json_data)
+    with open(DATA_TEXT_PATH, "w", encoding="utf-8") as file:
+        file.write(table_info)
+    with open(CONFIG_PATH, "r", encoding="utf-8") as file:
+        config = json.load(file)
+        schema_name = config.get("schema_name", "")
     # function that takes in a question and asks an LLM to create a corresponding query
     load_dotenv(ENV_PATH)
-    client = OpenAI(base_url=getenv("OPENAI_BASE"), api_key=getenv("OPENAI_API_KEY"))
+    client = OpenAI(base_url=getenv("LLM_API_BASE"), api_key=getenv("LLM_API_KEY"))
 
     completion = client.chat.completions.create(
         model=getenv("LLM_MODEL2"),
@@ -97,20 +110,22 @@ def generate_sql(refactored):
                 "content": f"""
                         You are an expert data analyst, specialied in SQL.
                         You take in a question and come up with a SQL query that could answer it.
-                        You output only SQL queries.
+                        You output as succinctly as possible and provide only SQL queries.
                         While creating SQL queries always remember the following:
-                            Use schema name while reffering tables when possible
+                            Use schema name while reffering tables
                             Use table name when refering columns
                             Use UPPER() while trying to match strings in WHERE
-                            Limit the output to 10 results unless otherwise
+                            Limit the output to 10 results unless otherwise specified
                         Do not make any assumptions about the database
                         Do not include this context in your output 
                         Below is some helpful information about the database
-                        schema: motor_store
+                        schema: {schema_name}
                         table info 
                         (formatted table name:
-                                    column name: useful information)
-                        {table_info}""",
+                                    column name: DATA TYPE
+                                        Cardinal Values)
+                        {table_info}
+                        Do not provide any other output except the SQL query""",
             },
             {"role": "user", "content": f"{refactored}"},
         ],
@@ -144,6 +159,7 @@ def execute_sql(query):
     cur.close()
     conn.close()
     return result
+
 
 # Define a function that uses Gradio's input and output widgets
 def process_input(input_text):

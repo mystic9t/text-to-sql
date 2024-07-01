@@ -180,7 +180,7 @@ def extract_cardinals(data_extact):
             column_type = column["type"]
             # Skip column if it contains any of the skip_column_keywords
             if any(keyword in column_name for keyword in skip_list):
-                column_info[column_name] = "Non-Categorical"
+                column_info[column_name] = str(column["type"])
             # Check if the column is a string type
             elif (
                 "CHAR" in str(column_type).upper() or "TEXT" in str(column_type).upper()
@@ -197,9 +197,9 @@ def extract_cardinals(data_extact):
                         )
                     ).mappings()  # Fetch results as a list of dictionaries
                     distinct_values = [row[column_name] for row in result]
-                column_info[column_name] = distinct_values
+                column_info[column_name] = [str(column["type"])] + distinct_values
             else:
-                column_info[column_name] = "High Cardinality"
+                column_info[column_name] = str(column["type"])
         tables_columns_dict[table_name] = column_info
 
     # Write the result to a JSON file
