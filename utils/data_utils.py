@@ -3,28 +3,29 @@ contains utility functions realted to data loading and clean up
 """
 
 import json
-import re
 import os
-from sqlalchemy import Column, String, Integer, DateTime, Float, Table, inspect
-from sqlalchemy.sql import text
-import pandas as pd
-import numpy as np
+import re
+from typing import Dict
 
-from utils.connection_utils import sql_engine
-from constants.sql_query import GET_CARDINALS
+import numpy as np
+import pandas as pd
+from sqlalchemy import Column, DateTime, Float, Integer, String, Table, inspect
+from sqlalchemy.sql import text
+
+from constants import sql_query
+from utils import connection_utils
 
 CONFIG_PATH = "config/config.json"
 
 
-def load_csv_to_df(data_path="data_tables"):
+def load_csv_to_df(
+    data_path: str = "data_tables",
+) -> Dict[str, pd.DataFrame]:
     """
     Loads all CSV files from a specified folder and assigns each to a different DataFrame.
 
     Parameters:
-    folder_path (str): The path to the folder containing the CSV files.
-
-    Returns:
-    dict: A dictionary where keys are the filenames (without extension) and values are DataFrames.
+    data_path (str): The path to the folder containing the CSV files.
     """
     # List all files in the directory
     files = os.listdir(data_path)
@@ -37,35 +38,22 @@ def load_csv_to_df(data_path="data_tables"):
     return dataframes
 
 
-def sanitize_column_name(col_name):
+def sanitize_column_name(col_name: str) -> str:
     """
     Sanitizes a DataFrame column name by removing special characters
     and replacing spaces with underscores.
-
-    Parameters:
-    col_name (str): The column name to be sanitized.
-
-    Returns:
-    str: The sanitized column name.
-
-    Example:
-    >>> sanitize_column_name('Column Name 123!')
-    'Column_Name_123_'
     """
     # Remove special characters and replace spaces with underscores
     return re.sub(r"\W+", "_", col_name)
 
 
-def convert_columns(df):
+def convert_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Converts the datatype of DataFrame columns based on configurations
     loaded from config.json. Converts columns to datetime if their names
     contain any of the words provided in date_time_list. Converts columns
     to object (string) if their names contain any of the words provided
     in key_list.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame whose columns need to be converted.
     """
     # Load configurations from config.json
     with open(CONFIG_PATH, "r", encoding="utf-8") as file:
@@ -91,16 +79,8 @@ def convert_columns(df):
 
 def create_table_from_dataframe(
     df: pd.DataFrame, table_name: str, engine, metadata_obj
-):
-    """
-    creates a Table from df using SQLAlchemy and basic cursor connection
-
-    Args:
-        df (pd.DataFrame): _description_
-        table_name (str): _description_
-        engine (_type_): _description_
-        metadata_obj (_type_): _description_
-    """
+) -> None:
+    """creates a Table from df using SQLAlchemy and basic cursor connection"""
     # Sanitize column names
     sanitized_columns = {col: sanitize_column_name(col) for col in df.columns}
     df = df.rename(columns=sanitized_columns)
@@ -143,14 +123,9 @@ def create_table_from_dataframe(
         conn.commit()
 
 
-def extract_cardinals(data_extact):
-    """Extract distinct values of string columns from tables in the given schema.
-
-    Args:
-        engine (sqlalchemy.engine.Engine): SQLAlchemy engine object.
-        metadata_obj (sqlalchemy.MetaData): SQLAlchemy MetaData object.
-        schema_name (str): Name of the schema to inspect.
-        data_extract (str): File path to save the JSON output.
+def extract_cardinals(data_extract_loc: str) -> None:
+    """Extract distinct values of string columns from tables
+    in the schema given in config
     """
     # Getting keywords for IDs/Keys
     with open(CONFIG_PATH, "r", encoding="utf-8") as file:
@@ -161,7 +136,7 @@ def extract_cardinals(data_extact):
         schema_name = config.get("schema_name", "")
 
     ## Creating SQLAlchemy engine to load tables in Database
-    engine, metadata_obj = sql_engine(driver_name, schema_name)
+    engine, metadata_obj = connection_utils.sql_engine(driver_name, schema_name)
     # Get Metadata
     metadata_obj.reflect(bind=engine)
     # Initialize an inspector
@@ -180,7 +155,7 @@ def extract_cardinals(data_extact):
             column_type = column["type"]
             # Skip column if it contains any of the skip_column_keywords
             if any(keyword in column_name for keyword in skip_list):
-                column_info[column_name] = str(column["type"])
+                column_info[column_name] = [str(column["type"])]
             # Check if the column is a string type
             elif (
                 "CHAR" in str(column_type).upper() or "TEXT" in str(column_type).upper()
@@ -189,7 +164,7 @@ def extract_cardinals(data_extact):
                 with engine.connect() as connection:
                     result = connection.execute(
                         text(
-                            GET_CARDINALS.format(
+                            sql_query.GET_CARDINALS.format(
                                 column_name=column_name,
                                 schema_name=schema_name,
                                 table_name=table_name,
@@ -199,11 +174,11 @@ def extract_cardinals(data_extact):
                     distinct_values = [row[column_name] for row in result]
                 column_info[column_name] = [str(column["type"])] + distinct_values
             else:
-                column_info[column_name] = str(column["type"])
+                column_info[column_name] = [str(column["type"])]
         tables_columns_dict[table_name] = column_info
 
     # Write the result to a JSON file
-    output_file = data_extact
+    output_file = data_extract_loc
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(tables_columns_dict, f, indent=4)
 
